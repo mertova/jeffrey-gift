@@ -242,17 +242,16 @@
 
   <div class="intro-letter">
     <p>
-      Greetings to far America! Happy anniversary, my dear. ♡
+      Greetings from across the Atlantic —
+      and congratulations, you got the app running.
+      <span class="accent">Already impressive.</span>
     </p>
     <p>
-      First of all, congratulations, you got the app running!
-      <span class="accent">Big step!</span>
-    </p>
-    <p>
-      I made this app for us. Four levels, four years, of adventures,
-      mountains, climbing, and a quantity of slivovica that you
-      <span class="accent">fa sho cannot calculate in Mathematica.</span>
-      It was beyond great.
+      I made this for us. Four levels, four years.
+      Four years of adventures, mountains, climbing,
+      and a quantity of slivovica
+      <span class="accent">that no physicist could ever calculate.</span>
+      Not even you.
     </p>
     <p>
       You are brilliant and kind and completely impossible,
@@ -260,7 +259,8 @@
       I am so happy we made it this far.
     </p>
     <p>
-      The hard part is behind us now. Relax. Enjoy the game.<br>
+      The hard part is behind us now.<br>
+      Relax. Enjoy the game.<br>
       <span class="accent">I love you. Good luck.</span>
     </p>
     <span class="signed">— L &nbsp;·&nbsp; xo</span>
@@ -277,44 +277,10 @@
 
 <script src="shared/utils.js"></script>
 <script>
-  // Try to play music immediately (works if browser allows autoplay)
-  // Falls back to starting on first click if blocked
-  var introAudio = null;
-  try {
-    introAudio = new Audio('shared/music-intro.mp3');
-    introAudio.loop = true;
-    introAudio.volume = 0;
-    introAudio.play().then(function() {
-      // Autoplay worked — fade in
-      var v = 0;
-      var t = setInterval(function() {
-        v = Math.min(v + 0.008, 0.28);
-        introAudio.volume = v;
-        if (v >= 0.28) clearInterval(t);
-      }, 80);
-    }).catch(function() {
-      // Autoplay blocked — start on first interaction instead
-      document.addEventListener('click', function go() {
-        introAudio.play().catch(function(){});
-        var v = 0;
-        var t = setInterval(function() {
-          v = Math.min(v + 0.008, 0.28);
-          introAudio.volume = v;
-          if (v >= 0.28) clearInterval(t);
-        }, 80);
-        document.removeEventListener('click', go);
-      }, { once: true });
-    });
-  } catch(e) {}
+  // Music is optional — missing files won't break anything
+  try { initMusic('shared/music-intro.mp3'); } catch(e) {}
 
   document.getElementById('start-btn').addEventListener('click', function() {
-    // Fade out music before navigating
-    if (introAudio) {
-      var fadeOut = setInterval(function() {
-        introAudio.volume = Math.max(introAudio.volume - 0.05, 0);
-        if (introAudio.volume <= 0) { clearInterval(fadeOut); introAudio.pause(); }
-      }, 40);
-    }
     var fade = document.getElementById('fade');
     fade.classList.add('active');
     setTimeout(function() {

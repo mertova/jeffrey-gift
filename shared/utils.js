@@ -70,38 +70,57 @@ const Progress = {
   reset() { localStorage.removeItem(this.key); }
 };
 
-/* Music — one song per page, starts on first interaction */
+/* Music — unlocks on first interaction, guaranteed */
 function initMusic(src, volume) {
   if (!src) return;
   var vol = volume || 0.28;
   var audio = new Audio(src);
   audio.loop = true;
   audio.volume = 0;
+  var started = false;
 
-  function startPlaying() {
+  function fadeIn() {
+    if (started) return;
+    started = true;
     audio.play().then(function() {
       var current = 0;
       var fade = setInterval(function() {
-        current = Math.min(current + 0.008, vol);
+        current = Math.min(current + 0.006, vol);
         audio.volume = current;
         if (current >= vol) clearInterval(fade);
-      }, 80);
+      }, 100);
     }).catch(function() {});
   }
 
-  // Start on first click or keypress anywhere on the page
-  document.addEventListener('click', function go() {
-    startPlaying();
-    document.removeEventListener('click', go);
-  }, { once: true });
-
-  document.addEventListener('keydown', function go() {
-    startPlaying();
-    document.removeEventListener('keydown', go);
-  }, { once: true });
+  // Try immediately
+  audio.play().then(function() {
+    started = true;
+    var current = 0;
+    var fade = setInterval(function() {
+      current = Math.min(current + 0.006, vol);
+      audio.volume = current;
+      if (current >= vol) clearInterval(fade);
+    }, 100);
+  }).catch(function() {
+    // Blocked — attach to every possible interaction
+    ['click','keydown','touchstart','mousedown'].forEach(function(evt) {
+      document.addEventListener(evt, function handler() {
+        fadeIn();
+        document.removeEventListener(evt, handler);
+      }, { once: true, passive: true });
+    });
+  });
 
   window.ambientAudio = audio;
   return audio;
+}
+
+function initFinaleMusic(src) {
+  if (!src) return;
+  try {
+    window.finaleAudio = new Audio(src);
+    window.finaleAudio.volume = 0;
+  } catch(e) {}
 }
 
 function initFinaleMusic(src) {

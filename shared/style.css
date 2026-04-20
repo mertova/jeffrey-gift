@@ -192,11 +192,12 @@ h1, h2, h3 {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  padding: 2rem;
+  padding: 2rem 2rem 6rem;
   z-index: 999;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.8s ease;
+  overflow-y: auto;
 }
 .reveal-overlay.visible {
   opacity: 1;
@@ -204,21 +205,25 @@ h1, h2, h3 {
 }
 .reveal-overlay .reveal-frame {
   position: relative;
-  max-width: min(560px, 85vw);
+  max-width: min(400px, 80vw);
+  width: 100%;
+  flex-shrink: 0;
   animation: revealIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
 }
 .reveal-overlay img {
   width: 100%;
+  max-height: 38vh;
+  object-fit: cover;
   display: block;
   border: 1px solid var(--amber-dim);
-  box-shadow: 0 0 0 4px var(--slate), 0 0 0 5px var(--amber-dim), 0 40px 80px rgba(0,0,0,0.8);
+  box-shadow: 0 0 0 4px var(--slate), 0 0 0 5px var(--amber-dim), 0 20px 60px rgba(0,0,0,0.8);
 }
 .reveal-overlay .reveal-text {
   color: var(--chalk);
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-  margin-top: 2rem;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  margin-top: 1.25rem;
   text-align: center;
   animation: revealIn 1s ease 1.2s both;
   max-width: 50ch;
@@ -228,13 +233,19 @@ h1, h2, h3 {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.1em;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
   text-align: center;
   animation: revealIn 1s ease 1.6s both;
 }
+/* Button fixed at bottom of screen — always visible */
 .reveal-overlay .btn {
-  margin-top: 2rem;
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
   animation: revealIn 1s ease 2s both;
+  white-space: nowrap;
 }
 
 @keyframes revealIn {
