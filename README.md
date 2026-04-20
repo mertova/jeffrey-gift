@@ -21,5 +21,6 @@ optional LLM-generated quiz questions via the Anthropic Claude API.
 4. Riddle sequence — cipher, cryptic clue, logic puzzle, lyric, personal
 
 ## Run it
-cd frontend
-python -m http.server 8000
+`cd jeffrey-gift`
+
+`python -m http.server 8000`
