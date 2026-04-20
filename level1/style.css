@@ -1,0 +1,321 @@
+/* =====================================================
+   Level 1 — Pair Matching (15 pairs, lives system)
+   ===================================================== */
+
+/* ── Board ── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  perspective: 1000px;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 640px) {
+  .board { grid-template-columns: repeat(5, 1fr); gap: 3px; }
+}
+@media (max-width: 420px) {
+  .board { grid-template-columns: repeat(4, 1fr); gap: 3px; }
+}
+
+/* ── Card ── */
+.card {
+  aspect-ratio: 3 / 4;
+  position: relative;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card.flipped,
+.card.matched { transform: rotateY(180deg); }
+.card.matched  { cursor: default; }
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Card back */
+.card-back {
+  background: var(--slate-2);
+  border: 1px solid rgba(212, 135, 42, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+.card-back::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(212, 135, 42, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 135, 42, 0.05) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+.card-back::after {
+  content: "+";
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--amber-dim);
+  position: relative;
+  z-index: 1;
+}
+.card:hover:not(.flipped):not(.matched) .card-back {
+  border-color: var(--amber);
+}
+
+/* Card front */
+.card-front {
+  transform: rotateY(180deg);
+  background: var(--slate-3);
+  border: 1px solid transparent;
+}
+.card-front img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.85) contrast(1.05);
+}
+.card.matched .card-front {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px var(--amber-dim);
+}
+
+/* Wrong pair flash */
+.card.wrong-flash .card-front {
+  animation: wrongFlash 0.5s ease;
+}
+@keyframes wrongFlash {
+  0%,100% { filter: saturate(0.85) contrast(1.05); }
+  30%     { filter: saturate(0) contrast(1.2) brightness(0.6); }
+}
+
+/* ── Lives bar ── */
+.lives-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--chalk-dim);
+}
+.lives-label {
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+.lives-track {
+  flex: 1;
+  height: 4px;
+  background: var(--slate-3);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.lives-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--amber);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.4s ease;
+  width: 100%;
+}
+.lives-fill.critical {
+  background: #c0392b;
+  animation: critPulse 0.8s ease-in-out infinite;
+}
+@keyframes critPulse {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.5; }
+}
+.lives-count {
+  flex-shrink: 0;
+  color: var(--amber);
+  font-weight: 500;
+  min-width: 2ch;
+  text-align: right;
+}
+.lives-count.critical { color: #c0392b; }
+
+/* ── Penalty overlay ── */
+.penalty-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.97);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.penalty-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.penalty-overlay img {
+  max-width: min(420px, 80vw);
+  max-height: 50vh;
+  object-fit: cover;
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  box-shadow: 0 0 0 3px var(--slate), 0 0 0 4px rgba(192, 57, 43, 0.3);
+  display: block;
+  animation: penaltyIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+.penalty-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  color: var(--chalk);
+  margin-top: 1.5rem;
+  animation: penaltyIn 0.6s ease 0.6s both;
+}
+.penalty-sub {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: rgba(192, 57, 43, 0.8);
+  letter-spacing: 0.1em;
+  margin-top: 0.4rem;
+  animation: penaltyIn 0.6s ease 0.8s both;
+}
+.penalty-overlay .btn {
+  margin-top: 2rem;
+  border-color: rgba(192, 57, 43, 0.6);
+  color: #c0392b;
+  animation: penaltyIn 0.6s ease 1s both;
+}
+.penalty-overlay .btn:hover {
+  background: rgba(192, 57, 43, 0.15);
+}
+
+@keyframes penaltyIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Year One overlay ── */
+.yearone-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--slate);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.yearone-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.yearone-inner {
+  text-align: center;
+  max-width: 500px;
+}
+.yearone-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--amber-dim);
+  letter-spacing: 0.18em;
+  margin-bottom: 2rem;
+  animation: fadeUp 0.6s ease 0.2s both;
+}
+.yearone-heading {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(2.8rem, 9vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--chalk);
+  margin-bottom: 1.5rem;
+  animation: fadeUp 0.7s ease 0.35s both;
+}
+.yearone-heading em {
+  color: var(--amber);
+}
+.yearone-sub {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--chalk-dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.7s ease 0.5s both;
+}
+.yearone-overlay .btn {
+  animation: fadeUp 0.7s ease 0.7s both;
+}
+.collage-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.97);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.collage-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.collage-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  max-width: min(520px, 85vw);
+  width: 100%;
+  animation: collageIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+.collage-grid img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.9);
+  transition: filter 0.3s;
+}
+.collage-grid img:hover { filter: saturate(1.1); }
+.collage-grid img:nth-child(1) { border: 1px solid rgba(212,135,42,0.4); }
+.collage-grid img:nth-child(2) { border: 1px solid rgba(212,135,42,0.25); }
+.collage-grid img:nth-child(3) { border: 1px solid rgba(212,135,42,0.25); }
+.collage-grid img:nth-child(4) { border: 1px solid rgba(212,135,42,0.4); }
+
+.collage-message {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  color: var(--chalk);
+  margin-top: 1.5rem;
+  animation: collageIn 0.8s ease 0.8s both;
+}
+.collage-sub {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--amber);
+  letter-spacing: 0.12em;
+  margin-top: 0.35rem;
+  animation: collageIn 0.8s ease 1s both;
+}
+.collage-overlay .btn {
+  margin-top: 2rem;
+  animation: collageIn 0.8s ease 1.3s both;
+}
+
+@keyframes collageIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

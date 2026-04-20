@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 — Emergence</title>
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+/* ── Sudoku board ── */
+.sudoku-wrap {
+  position: relative;
+  max-width: 500px;
+  margin: 0 auto 1rem;
+  aspect-ratio: 1/1;
+  border: 1px solid rgba(212, 135, 42, 0.3);
+}
+.sudoku-picture {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.9) contrast(1.05);
+}
+/* GIF sits hidden behind grid, shown on win */
+.sudoku-gif {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  z-index: 2;
+}
+.sudoku-gif img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sudoku-gif.visible { opacity: 1; }
+
+.sudoku-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows:    repeat(9, 1fr);
+  background: rgba(212, 135, 42, 0.2);
+  gap: 1px;
+  padding: 1px;
+  z-index: 3;
+}
+
+/* ── Cells ── */
+.cell {
+  background: var(--slate);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: clamp(0.65rem, 2.5vw, 1rem);
+  color: var(--chalk);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.6s ease, color 0.3s, opacity 0.8s ease;
+  position: relative;
+}
+.cell.box-right  { border-right:  2px solid rgba(212, 135, 42, 0.35); }
+.cell.box-bottom { border-bottom: 2px solid rgba(212, 135, 42, 0.35); }
+.cell.given {
+  background: var(--slate-2);
+  color: var(--amber);
+  cursor: default;
+  font-weight: 500;
+}
+.cell.selected {
+  background: rgba(212, 135, 42, 0.15);
+  outline: 1px solid var(--amber);
+  outline-offset: -1px;
+}
+.cell.correct {
+  background: transparent !important;
+  color: transparent !important;
+  cursor: default;
+}
+.cell.wrong {
+  color: #c0392b;
+  animation: shake 0.35s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%     { transform: translateX(-3px); }
+  75%     { transform: translateX(3px); }
+}
+
+/* ── Lives bar ── */
+.lives-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--chalk-dim);
+}
+.lives-label { letter-spacing: 0.06em; flex-shrink: 0; }
+.lives-track {
+  flex: 1;
+  height: 4px;
+  background: var(--slate-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.lives-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--amber);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
+  width: 100%;
+}
+.lives-fill.critical {
+  background: #c0392b;
+  animation: critPulse 0.8s ease-in-out infinite;
+}
+@keyframes critPulse {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.4; }
+}
+.lives-count {
+  flex-shrink: 0;
+  color: var(--amber);
+  font-weight: 500;
+  min-width: 2ch;
+  text-align: right;
+}
+.lives-count.critical { color: #c0392b; }
+
+/* ── Hint line ── */
+.hint-line {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--chalk-dim);
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.05em;
+}
+
+/* ── Numpad ── */
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.numpad button {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  padding: 0.6rem 0;
+  background: var(--slate-2);
+  border: var(--border);
+  color: var(--chalk);
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 2px;
+}
+.numpad button:hover { background: var(--slate-3); border-color: var(--amber); }
+.numpad button.clear { color: #c0392b; border-color: rgba(192,57,43,0.3); }
+
+/* ── Penalty overlay ── */
+.penalty-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.97);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.penalty-overlay.visible { opacity: 1; pointer-events: auto; }
+.penalty-overlay img {
+  max-width: min(400px, 80vw);
+  max-height: 48vh;
+  object-fit: cover;
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  box-shadow: 0 0 0 3px var(--slate), 0 0 0 4px rgba(192,57,43,0.3);
+  display: block;
+  animation: penaltyIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+.penalty-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  color: var(--chalk);
+  margin-top: 1.5rem;
+  animation: penaltyIn 0.6s ease 0.6s both;
+}
+.penalty-sub {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: rgba(192,57,43,0.8);
+  letter-spacing: 0.1em;
+  margin-top: 0.4rem;
+  animation: penaltyIn 0.6s ease 0.8s both;
+}
+.penalty-overlay .btn {
+  margin-top: 2rem;
+  border-color: rgba(192,57,43,0.6);
+  color: #c0392b;
+  animation: penaltyIn 0.6s ease 1s both;
+}
+.penalty-overlay .btn:hover { background: rgba(192,57,43,0.12); }
+
+@keyframes penaltyIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Win overlay ── */
+.win-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.97);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  text-align: center;
+}
+.win-overlay.visible { opacity: 1; pointer-events: auto; }
+.win-overlay .win-message {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  color: var(--chalk);
+  animation: fadeUp 0.8s ease 0.3s both;
+}
+.win-overlay .win-sub {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--amber);
+  letter-spacing: 0.12em;
+  margin-top: 0.4rem;
+  animation: fadeUp 0.8s ease 0.5s both;
+}
+.win-overlay .btn {
+  margin-top: 2rem;
+  animation: fadeUp 0.8s ease 0.8s both;
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <a href="../index.html" class="back-link">index</a>
+
+  <header class="page-header">
+    <div>
+      <div class="label">Problem 02 — Emergence</div>
+      <h1>Sudoku</h1>
+    </div>
+    <div class="meta">
+      revealed: <strong id="revealed">0%</strong><br>
+      <span style="color:var(--amber-dim)">// 3 lives</span>
+    </div>
+  </header>
+
+  <!-- Lives bar -->
+  <div class="lives-row">
+    <span class="lives-label">// lives</span>
+    <div class="lives-track">
+      <div class="lives-fill" id="lives-fill"></div>
+    </div>
+    <span class="lives-count" id="lives-count">3</span>
+  </div>
+
+  <!-- Sudoku board -->
+  <div class="sudoku-wrap">
+    <div class="sudoku-picture" id="picture"></div>
+    <div class="sudoku-gif" id="gif-layer">
+      <img src="../pictures/Level2/win.gif" alt="">
+    </div>
+    <div class="sudoku-grid" id="grid"></div>
+  </div>
+
+  <p class="hint-line">// click a cell → type 1–9 · backspace to clear</p>
+
+  <div class="numpad" id="numpad">
+    <button data-n="1">1</button><button data-n="2">2</button>
+    <button data-n="3">3</button><button data-n="4">4</button>
+    <button data-n="5">5</button><button data-n="6">6</button>
+    <button data-n="7">7</button><button data-n="8">8</button>
+    <button data-n="9">9</button>
+    <button data-n="0" class="clear">⌫</button>
+  </div>
+</main>
+
+<!-- Penalty overlay -->
+<div class="penalty-overlay" id="penalty-overlay">
+  <img src="../pictures/Level2/penalty.jpg" alt="">
+  <div class="penalty-text">Noooo.</div>
+  <div class="penalty-sub">the numbers don't lie. try again.</div>
+  <button class="btn" id="penalty-btn">try again</button>
+</div>
+
+<!-- Win overlay (after GIF reveal) -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-message">Year two.<br><em>Still here.</em></div>
+  <div class="win-sub">// not bad at all</div>
+  <button class="btn btn-solid" id="win-btn">→ problem 03</button>
+</div>
+
+<script src="../shared/utils.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  const gridEl      = document.getElementById('grid');
+  const pictureEl   = document.getElementById('picture');
+  const gifLayer    = document.getElementById('gif-layer');
+  const revealedEl  = document.getElementById('revealed');
+  const livesFill   = document.getElementById('lives-fill');
+  const livesCount  = document.getElementById('lives-count');
+  const penaltyEl   = document.getElementById('penalty-overlay');
+  const penaltyBtn  = document.getElementById('penalty-btn');
+  const winOverlay  = document.getElementById('win-overlay');
+  const winBtn      = document.getElementById('win-btn');
+
+  const MAX_LIVES = 3;
+  let lives = MAX_LIVES;
+  let selected = null;
+  let correct = 0;
+  let total = 0;
+
+  const { puzzle, solution } = LEVEL2_CONFIG;
+
+  // Set hidden image
+  pictureEl.style.backgroundImage =
+    `url('${picturePath(2, LEVEL2_CONFIG.hiddenImage)}')`;
+
+  // Build grid
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      if ((c + 1) % 3 === 0 && c !== 8) cell.classList.add('box-right');
+      if ((r + 1) % 3 === 0 && r !== 8) cell.classList.add('box-bottom');
+
+      if (puzzle[r][c] !== 0) {
+        cell.classList.add('given');
+        cell.textContent = puzzle[r][c];
+      } else {
+        total++;
+        cell.addEventListener('click', () => selectCell(cell));
+      }
+      gridEl.appendChild(cell);
+    }
+  }
+
+  updateLivesBar();
+
+  // ── Input ──
+  function selectCell(cell) {
+    if (cell.classList.contains('given') || cell.classList.contains('correct')) return;
+    if (selected) selected.classList.remove('selected');
+    selected = cell;
+    cell.classList.add('selected');
+  }
+
+  function enter(n) {
+    if (!selected) return;
+    const r = +selected.dataset.r, c = +selected.dataset.c;
+
+    if (n === 0) {
+      selected.textContent = '';
+      selected.classList.remove('wrong');
+      return;
+    }
+
+    if (solution[r][c] === n) {
+      // Correct
+      selected.textContent = n;
+      selected.classList.remove('selected', 'wrong');
+      selected.classList.add('correct');
+      selected = null;
+      correct++;
+      revealedEl.textContent = Math.round((correct / total) * 100) + '%';
+      if (correct === total) setTimeout(endGame, 600);
+    } else {
+      // Wrong
+      selected.textContent = n;
+      selected.classList.add('wrong');
+      loseLife();
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key >= '1' && e.key <= '9') enter(+e.key);
+    else if (e.key === 'Backspace' || e.key === 'Delete') enter(0);
+  });
+  document.getElementById('numpad').addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON') enter(+e.target.dataset.n);
+  });
+
+  // ── Lives ──
+  function loseLife() {
+    lives = Math.max(lives - 1, 0);
+    updateLivesBar();
+    if (lives === 0) setTimeout(showPenalty, 400);
+  }
+
+  function updateLivesBar() {
+    const pct = (lives / MAX_LIVES) * 100;
+    livesFill.style.width = pct + '%';
+    livesCount.textContent = lives;
+    const critical = lives <= 1;
+    livesFill.classList.toggle('critical', critical);
+    livesCount.classList.toggle('critical', critical);
+  }
+
+  function showPenalty() {
+    penaltyEl.classList.add('visible');
+  }
+
+  penaltyBtn.addEventListener('click', () => {
+    penaltyEl.classList.remove('visible');
+    setTimeout(() => location.reload(), 400);
+  });
+
+  // ── Win — GIF reveal then win screen ──
+  function endGame() {
+    Progress.set(2);
+
+    // Step 1: fade grid away revealing GIF underneath
+    gridEl.style.transition = 'opacity 1.5s ease';
+    gridEl.style.opacity = '0';
+    gifLayer.classList.add('visible');
+
+    // Step 2: show a "continue" button after 5s so he can admire the GIF
+    // then tap when ready — he controls the pace
+    setTimeout(() => {
+      winOverlay.classList.add('visible');
+    }, 7000);
+  }
+
+  winBtn.addEventListener('click', () => {
+    winOverlay.classList.remove('visible');
+    setTimeout(() => {
+      window.location.href = '../level3/index.html';
+    }, 400);
+  });
+
+  // Music
+  try { initMusic('../shared/music-level2.mp3'); } catch(e) {}
+
+  // Cheat: Shift+S skips to win
+  document.addEventListener('keydown', function(e) {
+    if (e.shiftKey && e.key === 'S') {
+      Progress.set(2);
+      gridEl.style.transition = 'opacity 1s ease';
+      gridEl.style.opacity = '0';
+      gifLayer.classList.add('visible');
+      setTimeout(() => { winOverlay.classList.add('visible'); }, 2000);
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

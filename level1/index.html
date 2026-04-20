@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01 — Recognition</title>
+<link rel="stylesheet" href="../shared/style.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="page">
+  <a href="../index.html" class="back-link">index</a>
+
+  <header class="page-header">
+    <div>
+      <div class="label">Problem 01 — Recognition</div>
+      <h1>Pair matching</h1>
+    </div>
+    <div class="meta">
+      pairs: <strong id="found">0</strong> / 15<br>
+      moves: <strong id="moves">0</strong>
+    </div>
+  </header>
+
+  <!-- Lives bar -->
+  <div class="lives-row">
+    <span class="lives-label">// lives</span>
+    <div class="lives-track">
+      <div class="lives-fill" id="lives-fill"></div>
+    </div>
+    <span class="lives-count" id="lives-count">5</span>
+  </div>
+
+  <!-- Board -->
+  <div class="board" id="board"></div>
+</main>
+
+<!-- Penalty overlay -->
+<div class="penalty-overlay" id="penalty-overlay">
+  <img src="../pictures/Level1/penalty.jpg" alt="Noooo">
+  <div class="penalty-text" id="penalty-text">Noooo.</div>
+  <div class="penalty-sub" id="penalty-sub">you need to try again.</div>
+  <button class="btn" id="penalty-btn">try again</button>
+</div>
+
+<!-- Collage / win overlay -->
+<div class="collage-overlay" id="collage-overlay">
+  <div class="collage-grid" id="collage-grid"></div>
+  <div class="collage-message">OMG.</div>
+  <div class="collage-sub">you are the coolest.</div>
+  <button class="btn btn-solid" id="collage-btn">→ year one</button>
+</div>
+
+<!-- Year One screen -->
+<div class="yearone-overlay" id="yearone-overlay">
+  <div class="yearone-inner">
+    <div class="yearone-label">// year_01 complete</div>
+    <div class="yearone-heading">Year one was<br><em>pretty dope,</em><br>bro.</div>
+    <button class="btn btn-solid" id="yearone-btn">→ problem 02</button>
+  </div>
+</div>
+
+<script src="../shared/utils.js"></script>
+<script src="config.js"></script>
+<script src="game.js"></script>
+<script>
+  try { initMusic('../shared/music-level1.mp3'); } catch(e) {}
+  // Cheat: Shift+S skips to level win screen
+  document.addEventListener('keydown', function(e) {
+    if (e.shiftKey && e.key === 'S') {
+      Progress.set(1);
+      document.getElementById('collage-overlay').classList.add('visible');
+    }
+  });
+</script>
+</body>
+</html>

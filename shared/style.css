@@ -1,0 +1,287 @@
+/* =====================================================
+   FIELD NOTES — shared stylesheet
+   Aesthetic: physicist's field notebook × climbing topo
+   Dark slate · chalk white · amber accent · monospace
+   ===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+
+:root {
+  --slate:      #0f1117;
+  --slate-2:    #161b27;
+  --slate-3:    #1e2535;
+  --chalk:      #e8e4dc;
+  --chalk-dim:  #9a9590;
+  --amber:      #d4872a;
+  --amber-soft: #e8a84a;
+  --amber-dim:  #7a4e18;
+  --red:        #c0392b;
+  --green:      #2ecc71;
+
+  --font-mono:    'DM Mono', 'Courier New', monospace;
+  --font-serif:   'Instrument Serif', Georgia, serif;
+  --font-sans:    'DM Sans', system-ui, sans-serif;
+
+  --radius: 2px;
+  --border: 1px solid rgba(212, 135, 42, 0.2);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--slate);
+  color: var(--chalk);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Subtle grid overlay — like graph paper */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(212, 135, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 135, 42, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Vignette */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+/* ── Typography ── */
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  color: var(--chalk);
+  letter-spacing: -0.01em;
+}
+
+.mono { font-family: var(--font-mono); }
+.serif { font-family: var(--font-serif); }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+/* ── Back link ── */
+.back-link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--chalk-dim);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  margin-bottom: 2rem;
+  transition: color 0.2s;
+}
+.back-link::before { content: "← "; color: var(--amber); }
+.back-link:hover { color: var(--chalk); }
+
+/* ── Page header ── */
+.page-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.page-header h1 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-style: italic;
+  line-height: 1;
+}
+.page-header .meta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--chalk-dim);
+  text-align: right;
+  line-height: 1.8;
+}
+
+/* ── Status bar ── */
+.status-bar {
+  display: flex;
+  gap: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--chalk-dim);
+  margin-bottom: 2rem;
+  padding: 0.75rem 1rem;
+  background: var(--slate-2);
+  border: var(--border);
+  letter-spacing: 0.05em;
+}
+.status-bar strong {
+  color: var(--amber);
+  font-weight: 500;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.25rem;
+  background: transparent;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-radius: var(--radius);
+}
+.btn:hover {
+  background: var(--amber);
+  color: var(--slate);
+}
+.btn-solid {
+  background: var(--amber);
+  color: var(--slate);
+}
+.btn-solid:hover {
+  background: var(--amber-soft);
+}
+.btn-ghost {
+  border-color: rgba(232, 228, 220, 0.2);
+  color: var(--chalk-dim);
+}
+.btn-ghost:hover {
+  border-color: var(--chalk-dim);
+  color: var(--chalk);
+  background: transparent;
+}
+
+/* ── Final reveal overlay ── */
+.reveal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.97);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 2rem;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.reveal-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.reveal-overlay .reveal-frame {
+  position: relative;
+  max-width: min(560px, 85vw);
+  animation: revealIn 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+}
+.reveal-overlay img {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--amber-dim);
+  box-shadow: 0 0 0 4px var(--slate), 0 0 0 5px var(--amber-dim), 0 40px 80px rgba(0,0,0,0.8);
+}
+.reveal-overlay .reveal-text {
+  color: var(--chalk);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  margin-top: 2rem;
+  text-align: center;
+  animation: revealIn 1s ease 1.2s both;
+  max-width: 50ch;
+}
+.reveal-overlay .reveal-sub {
+  color: var(--chalk-dim);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  margin-top: 0.5rem;
+  text-align: center;
+  animation: revealIn 1s ease 1.6s both;
+}
+.reveal-overlay .btn {
+  margin-top: 2rem;
+  animation: revealIn 1s ease 2s both;
+}
+
+@keyframes revealIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Scanline texture on images ── */
+.scanlines {
+  position: relative;
+}
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+}
+
+/* ── Coordinate corner decoration ── */
+.coords {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--amber-dim);
+  letter-spacing: 0.05em;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-in {
+  animation: fadeUp 0.6s ease both;
+}
